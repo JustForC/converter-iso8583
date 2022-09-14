@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"log"
 	"net/http"
+	"time"
 
 	"github.com/labstack/echo/v4"
 	"github.com/moov-io/iso8583"
@@ -39,8 +40,8 @@ func EchoTestControllers(c echo.Context) error {
 				Pref:        prefix.ASCII.Fixed,
 			}),
 			1: field.NewBitmap(&field.Spec{
-				Length:      16,
-				Description: "Secondary Bit Map",
+				Length:      32,
+				Description: "Bit Map",
 				Enc:         encoding.BytesToASCIIHex,
 				Pref:        prefix.Hex.Fixed,
 			}),
@@ -73,20 +74,27 @@ func EchoTestControllers(c echo.Context) error {
 			"error": err.Error(),
 		})
 	}
-	// Hasilnya selalu sama meskipun inputnya berbeda
-	err = message.Field(1, "asd")
+
+	err = message.Field(11, input.SystemTraceAuditNumber)
 	if err != nil {
 		return c.JSON(http.StatusOK, echo.Map{
 			"error": err.Error(),
 		})
 	}
-	err = message.Field(11, "123456")
+
+	err = message.Field(70, "301")
 	if err != nil {
 		return c.JSON(http.StatusOK, echo.Map{
 			"error": err.Error(),
 		})
 	}
-	message.Field(70, "301")
+
+	err = message.Field(7, time.Now().UTC().Format("0102150405"))
+	if err != nil {
+		return c.JSON(http.StatusOK, echo.Map{
+			"error": err.Error(),
+		})
+	}
 
 	rawMessage, err := message.Pack()
 	if err != nil {
