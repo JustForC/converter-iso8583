@@ -3,8 +3,8 @@ module converter-iso8583
 go 1.18
 
 require (
-	github.com/ideazxy/iso8583 v0.0.0-20160317060925-d06dcb8f1fc4
 	github.com/labstack/echo/v4 v4.9.0
+	github.com/moov-io/iso8583 v0.12.1
 )
 
 require (
@@ -13,6 +13,7 @@ require (
 	github.com/mattn/go-isatty v0.0.14 // indirect
 	github.com/valyala/bytebufferpool v1.0.0 // indirect
 	github.com/valyala/fasttemplate v1.2.1 // indirect
+	github.com/yerden/go-util v1.1.4 // indirect
 	golang.org/x/crypto v0.0.0-20210817164053-32db794688a5 // indirect
 	golang.org/x/net v0.0.0-20211015210444-4f30a5c0130f // indirect
 	golang.org/x/sys v0.0.0-20211103235746-7861aae1554b // indirect

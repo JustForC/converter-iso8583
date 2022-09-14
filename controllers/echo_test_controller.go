@@ -6,10 +6,12 @@ import (
 	"fmt"
 	"log"
 	"net/http"
-	"time"
 
-	"github.com/ideazxy/iso8583"
 	"github.com/labstack/echo/v4"
+	"github.com/moov-io/iso8583"
+	"github.com/moov-io/iso8583/encoding"
+	"github.com/moov-io/iso8583/field"
+	"github.com/moov-io/iso8583/prefix"
 )
 
 func EchoTestControllers(c echo.Context) error {
@@ -27,22 +29,73 @@ func EchoTestControllers(c echo.Context) error {
 	}
 	defer c.Request().Body.Close()
 
-	data := &models.EchoTestRequestISO{
-		SecondaryBitMap:                  iso8583.NewAlphanumeric(input.SecondaryBitMap),
-		TransmissionDateAndTime:          iso8583.NewNumeric(time.Now().UTC().Format("0601150405")),
-		SystemTraceAuditNumber:           iso8583.NewNumeric(input.SystemTraceAuditNumber),
-		AdditionalData:                   iso8583.NewLllvar([]byte(input.AdditionalData)),
-		NetworkManagementInformationCode: iso8583.NewNumeric("001"),
+	spec := &iso8583.MessageSpec{
+		Name: "ISO 8583 v1987 Hex",
+		Fields: map[int]field.Field{
+			0: field.NewString(&field.Spec{
+				Length:      4,
+				Description: "Message Type Indicator",
+				Enc:         encoding.ASCII,
+				Pref:        prefix.ASCII.Fixed,
+			}),
+			1: field.NewBitmap(&field.Spec{
+				Length:      16,
+				Description: "Secondary Bit Map",
+				Enc:         encoding.BytesToASCIIHex,
+				Pref:        prefix.Hex.Fixed,
+			}),
+			7: field.NewString(&field.Spec{
+				Length:      10,
+				Description: "Transmission Date & Time",
+				Enc:         encoding.ASCII,
+				Pref:        prefix.ASCII.Fixed,
+			}),
+			11: field.NewString(&field.Spec{
+				Length:      6,
+				Description: "Systems Trace Audit Number (STAN)",
+				Enc:         encoding.ASCII,
+				Pref:        prefix.ASCII.Fixed,
+			}),
+			70: field.NewString(&field.Spec{
+				Length:      3,
+				Description: "Network Management Information Code",
+				Enc:         encoding.ASCII,
+				Pref:        prefix.ASCII.Fixed,
+			}),
+		},
 	}
-	msg := iso8583.NewMessage("0800", data)
-	msg.MtiEncode = iso8583.ASCII
-	b, err := msg.Bytes()
+
+	message := iso8583.NewMessage(spec)
+
+	err = message.Field(0, "0800")
 	if err != nil {
-		return c.JSON(http.StatusBadRequest, echo.Map{
+		return c.JSON(http.StatusOK, echo.Map{
 			"error": err.Error(),
 		})
 	}
+	// Hasilnya selalu sama meskipun inputnya berbeda
+	err = message.Field(1, "asd")
+	if err != nil {
+		return c.JSON(http.StatusOK, echo.Map{
+			"error": err.Error(),
+		})
+	}
+	err = message.Field(11, "123456")
+	if err != nil {
+		return c.JSON(http.StatusOK, echo.Map{
+			"error": err.Error(),
+		})
+	}
+	message.Field(70, "301")
+
+	rawMessage, err := message.Pack()
+	if err != nil {
+		return c.JSON(http.StatusOK, echo.Map{
+			"error": err.Error(),
+		})
+	}
+
 	return c.JSON(http.StatusOK, echo.Map{
-		"data": fmt.Sprintf("%x", b),
+		"data": fmt.Sprintf("% x", rawMessage),
 	})
 }
